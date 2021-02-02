@@ -1,0 +1,188 @@
+schema {
+    query: Query
+}
+
+# Pagination direction
+enum Pagination {
+    NEXT
+    PREV
+}
+
+# Inventory or location record's status filter
+enum RecordStatusFilter {
+    EXCEPTION
+    AUDIT
+    RESOLVED
+}
+
+# Inventory or location record's user applied status
+enum RecordUserStatus {
+    AUDIT
+    RESOLVED
+}
+
+# Location filter
+input LocationFilter {
+    # full or partial location name string to match on, null to not apply
+    locationName: String
+    # starting aisle in aisle range inclusive filter, null to not apply
+    aisleStart: String
+    # ending aisle in the aisle range inclusive filter, null to not apply
+    aisleEnd: String
+    # occupancy flag, set to true to filter on occupied bin location, false to filter on empty, null to not apply
+    occupancy: Boolean
+    # list of enum values to inclusive filter on bin record status, null to not apply
+    statusFilter: [RecordStatusFilter]
+}
+
+type Query {
+    # Get information about the warehouse zones accessible by the currently logged in user
+    myInfo: User!
+    # Get a page of records from the latest scanned location records for a zone
+    zoneLocationsPage(
+        # zone identifier
+        zoneId: String!,
+        # number of rows per page, if null, defaults to 10
+        limit: Int,
+        # cursor from PageInfo to paginate, if null, set to the first of the total records
+        cursor: String,
+        # pagination direction, if null, defaults to NEXT
+        paginate: Pagination,
+        # filter, if null, no filter is applied
+        filter: LocationFilter): ZoneLocationsPage
+}
+
+# User accessible zone lists
+type User {
+    # Nested list of zones grouped under warehouse under organization
+    organizations: [Organization]
+}
+
+type Organization {
+    name: String!
+    warehouses: [Warehouse]
+}
+
+type Warehouse {
+    id: String!
+    name: String!
+    zones: [Zone]
+}
+
+# Information about a zone
+type Zone {
+    # zone identifier
+    id: String!
+    # zone name
+    name: String!
+    # ordered list of aisle names
+    aisles: [String]!
+}
+
+# Meta-data about a page of records
+type PageInfo {
+    # total number of records to page through
+    totalRecords: Int!
+    # index of the first item in the returned BinPallet list. Index count starts at 0
+    startIndex: Int
+    # cursor token used to paginate to the prev page, use only if hasPrevPage is true
+    startCursor: String
+    # cursor token used to paginate to the next page, use only if hasNextPage is true
+    endCursor: String
+    hasNextPage: Boolean
+    hasPrevPage: Boolean
+}
+
+# One inventory or location exception/issue
+type RecordException {
+    # type of issue detected
+    type: String
+    # longer description of the issue
+    description: String
+}
+
+# One inventory record
+type InventoryRecord {
+    # record identifier
+    recordId: String!
+    # warehouse aisle
+    aisle: String!
+    # bin location name, unique within a warehouse zone
+    binName: String!
+    # identifier of the location record that contains this inventory record
+    locationRecordId: String!
+    # inventory record timestamp
+    timestamp: String!
+    # list of valid license plate numbers on PALLET record type, empty list if no LPN
+    lpn: [String]!
+    # list of inventory exceptions
+    exceptions: [RecordException]!
+    # user applied status, null if no user status applied to this record
+    userStatus: RecordUserStatus
+}
+
+# One inventory page item
+type InventoryPageItem {
+    # cursor token for this record
+    cursor: String
+    # inventory record
+    record: InventoryRecord
+}
+
+# A page from the latest inventory records for a zone
+type ZoneInventoryPage {
+    # zone identifier
+    zoneId: String!
+    # IANA/Olson timezone string for the record timestamps
+    timezone: String!
+    # page list of inventory page items
+    records: [InventoryPageItem]
+    # meta-data about the page list
+    pageInfo: PageInfo
+}
+
+# Reference to an inventory record associated with an LPN
+type InventoryReference {
+    lpn: String!
+    recordId: String!
+}
+
+# One location record
+type LocationRecord {
+    # record identifier
+    recordId: String!
+    # warehouse aisle
+    aisle: String!
+    # bin location name, unique within a warehouse zone
+    binName: String!
+    # location record timestamp
+    timestamp: String!
+    # list of inventory references in this location, empty list if no inventory detected in this location
+    inventory: [InventoryReference]!
+    # list of location exceptions, empty list if no exceptions
+    exceptions: [RecordException]!
+    # user applied status, null if no user status applied to this record
+    userStatus: RecordUserStatus
+}
+
+type LocationPageItem {
+    # cursor token for this record
+    cursor: String
+    # inventory record
+    record: LocationRecord
+}
+
+# A page from the latest scanned location records for a zone
+type ZoneLocationsPage {
+    # zone identifier
+    zoneId: String!
+    # IANA/Olson timezone string for the record timestamps
+    timezone: String!
+    # page list of inventory page items
+    records: [LocationPageItem]
+    # meta-data about the page list
+    pageInfo: PageInfo
+}
+
+
+
