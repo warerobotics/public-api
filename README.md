@@ -21,7 +21,7 @@ the `requests` and `AWS4Auth` libraries. A sample `requirements.txt` file is inc
 
 # Schema
 
-Please refer to the `ware_schem.graphql` file for a complete schema definition of available endpoints in the Ware API.
+Please refer to the `ware_schema.graphql` file for a complete schema definition of available endpoints in the Ware API.
 
 ## Queries
 
