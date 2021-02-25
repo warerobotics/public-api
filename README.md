@@ -190,3 +190,108 @@ can use the `hasNextPage` and `hasPreviousPage` values to determine if there is 
 before or after the result that was returned.
 
 
+## WMS Data Upload
+
+Ware supports uploading a file sourced from a WMS system as a data source for comparisons against detected state. This
+data upload process has 3 steps that are illustrated in the `wms_upload.py` script:
+
+1. Call the createWMSLocationHistoryUpload endpoint to initiate the upload process.  This will create a signed URL that
+the client will use to transmit the WMS data file. The request and the return respose will follow the following format:
+   
+**Request:**
+
+```graphql
+mutation CreateWMSLocationHistoryUpload($zoneId: String!) {
+                createWMSLocationHistoryUpload(zoneId: $zoneId) {
+                    id
+                    uploadFields
+                    uploadUrl
+                }
+            }
+```
+
+**Response:**
+
+```json
+{
+  "data": {
+    "createWMSLocationHistoryUpload": {
+      "id": "810c2b23-a1ea-41ef-b527-0ace8fe49466",
+      "uploadUrl": "<URL TO PERFORM POST UPLOAD>",
+      "uploadFields": "<JSON STRING OF FIELDS THAT MUST BE INCLUDED WITH THE UPLOAD POST>"
+    }
+  }
+}
+```
+   
+2. Perform a HTTP POST operation on the returned URL to transmit the WMS data file. The data file must be a CSV file 
+   with, at minimum, a column named "Location" that contains a warehouse bin location, and a column named "LPN" which 
+   contains LPN data for that location.  If multiple LPNs are present in a location each entry should be on a 
+   separate line.  The POST must be made against the returned "uploadUrl" value and the returned value for 
+   "uploadFields" must be included in the POST data or the upload will be rejected.
+   
+
+3. Once the upload is complete the Ware back end will process the file.  To retrieve status information about the upload
+   process the client can either poll the Ware back end periodically for status information, or subscribe to status
+   updates for that upload processing job.   Both scenarios are shown in the sample script, and details of both follow
+   
+**Polling (read) request:**
+```graphql
+query WmsLocationHistoryUploadRecord($id: String!) {
+              wmsLocationHistoryUploadRecord(id: $id) {
+                created
+                failedRecords
+                id
+                processedRecords
+                skippedRecords
+                status
+                totalRecords
+                updated
+                userId
+                zoneId
+              }
+            }
+```
+
+**Subscription request:**
+```graphql
+subscription SubscribeWMSLocationHistoryUploadStatusChange($id: String!) {
+              subscribeWMSLocationHistoryUploadStatusChange(id: $id) {
+                created
+                failedRecords
+                id
+                processedRecords
+                skippedRecords
+                status
+                totalRecords
+                updated
+                userId
+                zoneId
+              }
+            }
+```
+
+
+**Response:**
+
+```json
+{
+   "data": {
+      "subscribeWMSLocationHistoryUploadStatusChange": {
+         "created":"2021-02-21T03:41:37+00:00",
+         "failedRecords":0,
+         "id":"810c2b23-a1ea-41ef-b527-0ace8fe49466",
+         "processedRecords":0,
+         "skippedRecords":0,
+         "status":"PROCESSING",
+         "totalRecords":0,
+         "updated":"2021-02-21T03:41:42+00:00",
+         "userId":"a7de417c-e6a2-4f57-8fa5-705c9ecb24d0",
+         "zoneId":"47881736-b5d5-4341-a3ca-9ef63c342db3"
+      }
+   }
+}
+```
+The response is of type `WMSLocationHistoryUpload` regardless of the method used.  The upload processing is considered
+complete once the `status` value is either "SUCCESS" or "FAILURE" and the included sample script shows how to gracefully
+complete processing for both status checking methods.
