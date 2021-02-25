@@ -1,5 +1,6 @@
 schema {
     query: Query
+    mutation: Mutation
 }
 
 # Pagination direction
@@ -50,6 +51,18 @@ type Query {
         paginate: Pagination,
         # filter, if null, no filter is applied
         filter: LocationFilter): ZoneLocationsPage
+    # Get a single record for a WMS Location History Upload
+    wmsLocationHistoryUploadRecord(
+        # id that was originally returned when the upload job was created
+        id: String!): WMSLocationHistoryUpload
+}
+
+type Mutation {
+    # Initiate the WMS import process for a given zone
+    createWMSLocationHistoryUpload(
+        # Zone identifier
+        zoneId: String!
+    ): CreateWMSLocationHistoryUploadResult
 }
 
 # User accessible zone lists
@@ -184,5 +197,44 @@ type ZoneLocationsPage {
     pageInfo: PageInfo
 }
 
+# Return result from createWMSLocationHistoryUpload
+type CreateWMSLocationHistoryUploadResult {
+    # WMSUploadID to be used with subscriptions and status lookup
+    id: String!
+    # Pre-Signed S3 URL to use for uploading the payload file
+    uploadUrl: String!
+    # JSON-encoded string of accompanying fields that need to be passed with the uploadUrl when performing a POST
+    uploadFields: String!
+}
 
+enum WMSUploadStatus {
+    PENDING_UPLOAD
+    PROCESSING
+    SUCCESS
+    FAILURE
+}
 
+# Data type that mirrors what is stored in the database
+type WMSLocationHistoryUpload {
+    # WMSUploadID that can be used for subscriptions
+    id: String!
+    # Zone that this upload was done against
+    zoneId: String!
+    # User Id of the user who submitted the upload
+    userId: String!
+
+    # Total number of records in the upload, calculated after initial upload
+    totalRecords: Int
+    # Number of records the processing function has sucessfully processed
+    processedRecords: Int
+    # Number of records the processing function has skipped due to non-matching location name
+    skippedRecords: Int
+    # Number of records the processing function has attempted to process and encountered a failure
+    failedRecords: Int
+    # Overall status of the processing workflow
+    status: WMSUploadStatus
+    # Created timestamp
+    created: String!
+    # Updated timestamp.  As the processing function performs work, this value changes
+    updated: String!
+}
