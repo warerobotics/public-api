@@ -37,7 +37,11 @@ class WareAPI:
             if (data := json_response.get("data")) is not None and data.get(data_key) is not None:
                 return {"status": "success", "data": json_response["data"][data_key]}
 
-        return {"status": "error", "message": f"Problem loading response data for {data_key}"}
+        return {
+            "status": "error",
+            "message": f"Problem loading response data for {data_key}",
+            "response": raw_response.json(),
+        }
 
     def my_info(self) -> Dict:
         query = """
@@ -176,6 +180,28 @@ class WareAPI:
             subscription_variables=variables,
             data_handler=data_handler,
         )
+
+    def reset_required_action(self, required_action_id: str) -> Dict:
+        mutation = """
+          mutation ResetDroneRequiredAction($requiredActionId: String!) {
+            resetDroneRequiredAction(requiredActionId: $requiredActionId) {
+              nests {
+                drone {
+                  id
+                  requiredActions {
+                    id
+                    action
+                    shortName
+                    description
+                  }
+                }
+              }
+            }
+          }
+        """
+        variables = {'requiredActionId': required_action_id}
+        raw_response = self.query(query=mutation, variables=variables)
+        return self._extract_json_response(raw_response, "resetDroneRequiredAction")
 
     @staticmethod
     def unsubscribe(subscription_id: str, web_socket: websocket.WebSocket) -> None:

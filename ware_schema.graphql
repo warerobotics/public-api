@@ -63,6 +63,11 @@ type Mutation {
         # Zone identifier
         zoneId: String!
     ): CreateWMSLocationHistoryUploadResult
+    # Clear a required action for a drone
+    resetDroneRequiredAction(
+      # Required action identifier
+      requiredActionId: String!
+    ): WarehouseRobotSystems
 }
 
 # User accessible zone lists
@@ -237,4 +242,31 @@ type WMSLocationHistoryUpload {
     created: String!
     # Updated timestamp.  As the processing function performs work, this value changes
     updated: String!
+}
+
+type WarehouseRobotSystems {
+  warehouseId: String!
+  nests: [Nest]!
+}
+
+type Nest {
+  id: String!
+  name: String!
+  drone: Drone
+}
+
+type Drone {
+  id: String!
+  name: String!
+  requiredActions: [DroneRequiredAction]!
+  flightAllowed: Boolean
+}
+
+type DroneRequiredAction {
+  id: String!
+  shortName: String!
+  description: String!
+  docsUrl: String!
+  # If action is non-null, user must call a mutation to clear this required action
+  action: String
 }

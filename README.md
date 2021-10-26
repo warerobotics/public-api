@@ -197,7 +197,7 @@ data upload process has 3 steps that are illustrated in the `wms_upload.py` scri
 
 1. Call the createWMSLocationHistoryUpload endpoint to initiate the upload process.  This will create a signed URL that
 the client will use to transmit the WMS data file. The request and the return respose will follow the following format:
-   
+
 **Request:**
 
 ```graphql
@@ -295,3 +295,79 @@ subscription SubscribeWMSLocationHistoryUploadStatusChange($id: String!) {
 The response is of type `WMSLocationHistoryUpload` regardless of the method used.  The upload processing is considered
 complete once the `status` value is either "SUCCESS" or "FAILURE" and the included sample script shows how to gracefully
 complete processing for both status checking methods.
+
+## Drone required actions
+
+### Clear/reset a required action
+**Description:**
+This mutation may be used to remove required actions. The UUID for the specific required action is
+necessary.
+
+**Request:**
+```graphql
+mutation ResetDroneRequiredAction($requiredActionId: String!) {
+  resetDroneRequiredAction(requiredActionId: $requiredActionId) {
+    nests {
+      drone {
+        id
+        requiredActions {
+          id
+          action
+          shortName
+          description
+        }
+      }
+    }
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "setDroneRequiredAction": {
+      "nests": [
+        {
+          "drone": {
+            "id": "06b6c19b-bba5-4b27-a9ad-e04590ba95b5",
+            "requiredActions": []
+          }
+        },
+        {
+          "drone": {
+            "id": "ffa3deef-9432-408b-9a11-862142fcaf5e",
+            "requiredActions": [
+              {
+                "id": "03fa37f9-946f-497d-b6f1-e8bccc73a3d2",
+                "action": null,
+                "shortName": "Wait for it",
+                "description": "This is a test action to where the system will detect the correction"
+              }
+            ]
+          }
+        },
+        {
+          "drone": {
+            "id": "b9035ee9-bd78-4335-a8b1-2ac6393c547d",
+            "requiredActions": [
+              {
+                "id": "ed30ca51-9a76-48c9-a06b-5860253e53e9",
+                "action": null,
+                "shortName": "Wait for it",
+                "description": "This is a test action to where the system will detect the correction"
+              }
+            ]
+          }
+        },
+        {
+          "drone": {
+            "id": "0bf4a26b-1ac3-4734-b00b-ef7c37b6ed2c",
+            "requiredActions": []
+          }
+        }
+      ]
+    }
+  }
+}
+```
