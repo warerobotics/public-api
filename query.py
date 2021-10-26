@@ -31,15 +31,19 @@ def main() -> None:
     zone_id = None
     my_info_data = my_info_result["data"]
     if "organizations" in my_info_data and len(my_info_data["organizations"]) > 0:
+        organization_name = my_info_data["organizations"][0]["name"]
         if (
             "warehouses" in my_info_data["organizations"][0]
             and len(my_info_data["organizations"][0]["warehouses"]) > 0
         ):
+            warehouse_name = my_info_data["organizations"][0]["warehouses"][0]["name"]
             if (
                 "zones" in my_info_data["organizations"][0]["warehouses"][0]
                 and len(my_info_data["organizations"][0]["warehouses"][0]["zones"]) > 0
             ):
                 zone_id = my_info_data["organizations"][0]["warehouses"][0]["zones"][0]["id"]
+                zone_name = my_info_data["organizations"][0]["warehouses"][0]["zones"][0]["name"]
+                print(f"Connected to {organization_name}: {warehouse_name}: {zone_name}")
             else:
                 print("ERROR: No zones returned")
         else:
