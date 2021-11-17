@@ -37,7 +37,10 @@ def main() -> None:
     api = WareAPI(host=args.endpoint)
 
     # Prepare a file upload request
-    create_wms_upload_result = api.create_wms_location_history_upload(zone_id=args.zone_id)
+    file_format = "CSV"
+    if args.file.lower().endswith("xlsx"):
+        file_format = "XLSX"
+    create_wms_upload_result = api.create_wms_location_history_upload(zone_id=args.zone_id, file_format=file_format)
     print(create_wms_upload_result)
 
     if create_wms_upload_result["status"] != "success":

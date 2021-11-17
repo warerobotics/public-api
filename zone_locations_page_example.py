@@ -15,45 +15,15 @@ def main() -> None:
     parser.add_argument(
         "--endpoint", type=str, help="Optional endpoint value to override the default", default=DEFAULT_HOST
     )
+    parser.add_argument("--zone_id", type=str, help="Zone ID that the query pertains to")
     args = parser.parse_args()
 
     api = WareAPI(host=args.endpoint)
     # Use JSON format string for the query. It does not need reformatting.
 
-    my_info_result = api.my_info()
-    if my_info_result["status"] != "success":
-        print(f"Error calling myInfo: {my_info_result['message']}.\n"
-              "Ensure proper AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set and "
-              "configured properly in the Ware portal")
-        return
-
-    # Extract the first warehouse zone that was returned, and use it in a query for more detailed information
-    zone_id = None
-    my_info_data = my_info_result["data"]
-    if "organizations" in my_info_data and len(my_info_data["organizations"]) > 0:
-        organization_name = my_info_data["organizations"][0]["name"]
-        if (
-            "warehouses" in my_info_data["organizations"][0]
-            and len(my_info_data["organizations"][0]["warehouses"]) > 0
-        ):
-            warehouse_name = my_info_data["organizations"][0]["warehouses"][0]["name"]
-            if (
-                "zones" in my_info_data["organizations"][0]["warehouses"][0]
-                and len(my_info_data["organizations"][0]["warehouses"][0]["zones"]) > 0
-            ):
-                zone_id = my_info_data["organizations"][0]["warehouses"][0]["zones"][0]["id"]
-                zone_name = my_info_data["organizations"][0]["warehouses"][0]["zones"][0]["name"]
-                print(f"Connected to {organization_name}: {warehouse_name}: {zone_name}")
-            else:
-                print("ERROR: No zones returned")
-        else:
-            print("ERROR: No warehouses returned")
-    else:
-        print("ERROR: No organizations returned")
-
     try:
         # zone_id should be a valid UUID4
-        zone_uuid = uuid.UUID(f"urn:uuid:{zone_id}")
+        zone_uuid = uuid.UUID(f"urn:uuid:{args.zone_id}")
         page = 0
         more_data = True
         cursor = None

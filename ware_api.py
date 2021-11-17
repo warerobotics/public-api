@@ -108,19 +108,38 @@ class WareAPI:
         raw_response = self.query(query=query, variables=variables)
         return self._extract_json_response(raw_response, "zoneLocationsPage")
 
-    def create_wms_location_history_upload(self, zone_id: str) -> Dict:
+    def create_wms_location_history_upload(self, zone_id: str, file_format: Optional[str]="csv") -> Dict:
+        if file_format:
+            file_format = file_format.upper()
+        else:
+            file_format = "CSV"
+
         mutation = """
-            mutation CreateWMSLocationHistoryUpload($zoneId: String!) {
-                createWMSLocationHistoryUpload(zoneId: $zoneId) {
+            mutation CreateWMSLocationHistoryUpload($zoneId: String!, $fileFormat: WMSUploadFormat) {
+                createWMSLocationHistoryUpload(zoneId: $zoneId, format: $fileFormat) {
                     id
                     uploadFields
                     uploadUrl
                 }
             }
         """
-        variables = {"zoneId": zone_id}
+        variables = {"zoneId": zone_id, "fileFormat": file_format}
         raw_response = self.query(query=mutation, variables=variables)
         return self._extract_json_response(raw_response, "createWMSLocationHistoryUpload")
+
+    def create_wms_location_history_records(self, zone_id: str, data: Dict[str, str]) -> Dict:
+        mutation = """
+            mutation CreateWMSLocationHistoryRecords($zoneId: String!, $records: [WMSLocationHistoryRecord]!) {
+                createWMSLocationHistoryRecords(zoneId: $zoneId, records: $records) {
+                    id
+                    uploadFields
+                    uploadUrl
+                }
+            }
+        """
+        variables = {"zoneId": zone_id, "records": data}
+        raw_response = self.query(query=mutation, variables=variables)
+        return self._extract_json_response(raw_response, "createWMSLocationHistoryRecords")
 
     def wms_location_history_upload_record(self, record_id: str) -> Dict:
         query = """

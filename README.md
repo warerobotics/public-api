@@ -192,17 +192,29 @@ before or after the result that was returned.
 
 ## WMS Data Upload
 
-Ware supports uploading a file sourced from a WMS system as a data source for comparisons against detected state. This
-data upload process has 3 steps that are illustrated in the `wms_upload.py` script:
+Ware supports uploading either a file or individual records sourced from a WMS system as a data source for comparisons 
+against detected state. This data upload process has 3 steps that are illustrated in the `wms_file_upload_example.py` 
+and the `wms_record_upload_example.py` scripts:
 
-1. Call the createWMSLocationHistoryUpload endpoint to initiate the upload process.  This will create a signed URL that
-the client will use to transmit the WMS data file. The request and the return respose will follow the following format:
+1. Call the either the createWMSLocationHistoryUpload or createWMSLocationHistoryRecords endpoint to initiate the 
+upload process.  In the case of a file upload, this will create a signed URL that the client will use to transmit the 
+WMS data file. The request and the return response will follow the following format in either case:
 
 **Request:**
 
 ```graphql
-mutation CreateWMSLocationHistoryUpload($zoneId: String!) {
+mutation CreateWMSLocationHistoryUpload($zoneId: String!, $fileFormat: WMSUploadFormat) {
                 createWMSLocationHistoryUpload(zoneId: $zoneId) {
+                    id
+                    uploadFields
+                    uploadUrl
+                }
+            }
+```
+- or - 
+```graphql
+mutation CreateWMSLocationHistoryRecords($zoneId: String!, $records: [WMSLocationHistoryRecord]!) {
+                createWMSLocationHistoryRecords(zoneId: $zoneId, records: $records) {
                     id
                     uploadFields
                     uploadUrl
@@ -223,11 +235,32 @@ mutation CreateWMSLocationHistoryUpload($zoneId: String!) {
   }
 }
 ```
+
+- or -
+
+```json
+{
+  "data": {
+    "createWMSLocationHistoryRecords": {
+      "id": "810c2b23-a1ea-41ef-b527-0ace8fe49466"
+    }
+  }
+}
+```
+
+In the case of `createWMSLocationHistoryRecords` the `uploadUrl` and `uploadFields` return values can be ignored, and
+the control flow can proceed to step 3.  Internally the individual records are batched and processed asynchronously in 
+the same manner as a file-based WMS upload.
+
    
-2. Perform a HTTP POST operation on the returned URL to transmit the WMS data file. The data file must be a CSV file 
-   with, at minimum, a column named "Location" that contains a warehouse bin location, and a column named "LPN" which 
+2. Perform a HTTP POST operation on the returned URL to transmit the WMS data file. The data file may be either CSV or
+   MS Excel XLSX format as specified by the optional format parameter.  At minimum, the file most contain a column named
+   "Location" that contains a warehouse bin location, and a column named "LPN" which 
    contains LPN data for that location.  If multiple LPNs are present in a location each entry should be on a 
-   separate line.  The POST must be made against the returned "uploadUrl" value and the returned value for 
+   separate line.  If the LPN column for a Location is empty the behaviour is dictated by the setup for the warehouse 
+   zone.  Please contact your Ware representative for information regarding support for indicating the absence of LPN 
+   data for a given warehouse zone.
+   The POST must be made against the returned "uploadUrl" value and the returned value for 
    "uploadFields" must be included in the POST data or the upload will be rejected.
    
 
