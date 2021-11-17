@@ -1,6 +1,7 @@
 schema {
     query: Query
     mutation: Mutation
+    subscription: Subscription
 }
 
 # Pagination direction
@@ -61,13 +62,22 @@ type Mutation {
     # Initiate the WMS import process for a given zone
     createWMSLocationHistoryUpload(
         # Zone identifier
+        zoneId: String!,
+        format: WMSUploadFormat
+    ): CreateWMSLocationHistoryUploadResult
+    createWMSLocationHistoryRecords(
         zoneId: String!
+        records: [WMSLocationHistoryRecord]!
     ): CreateWMSLocationHistoryUploadResult
     # Clear a required action for a drone
     resetDroneRequiredAction(
       # Required action identifier
       requiredActionId: String!
     ): WarehouseRobotSystems
+}
+
+type Subscription {
+    subscribeWMSLocationHistoryUploadStatusChange(id: String!): WMSLocationHistoryUpload
 }
 
 # User accessible zone lists
@@ -117,46 +127,6 @@ type RecordException {
     type: String
     # longer description of the issue
     description: String
-}
-
-# One inventory record
-type InventoryRecord {
-    # record identifier
-    recordId: String!
-    # warehouse aisle
-    aisle: String!
-    # bin location name, unique within a warehouse zone
-    binName: String!
-    # identifier of the location record that contains this inventory record
-    locationRecordId: String!
-    # inventory record timestamp
-    timestamp: String!
-    # list of valid license plate numbers on PALLET record type, empty list if no LPN
-    lpn: [String]!
-    # list of inventory exceptions
-    exceptions: [RecordException]!
-    # user applied status, null if no user status applied to this record
-    userStatus: RecordUserStatus
-}
-
-# One inventory page item
-type InventoryPageItem {
-    # cursor token for this record
-    cursor: String
-    # inventory record
-    record: InventoryRecord
-}
-
-# A page from the latest inventory records for a zone
-type ZoneInventoryPage {
-    # zone identifier
-    zoneId: String!
-    # IANA/Olson timezone string for the record timestamps
-    timezone: String!
-    # page list of inventory page items
-    records: [InventoryPageItem]
-    # meta-data about the page list
-    pageInfo: PageInfo
 }
 
 # Reference to an inventory record associated with an LPN
@@ -219,6 +189,11 @@ enum WMSUploadStatus {
     FAILURE
 }
 
+enum WMSUploadFormat {
+    CSV
+    XLSX
+}
+
 # Data type that mirrors what is stored in the database
 type WMSLocationHistoryUpload {
     # WMSUploadID that can be used for subscriptions
@@ -242,6 +217,11 @@ type WMSLocationHistoryUpload {
     created: String!
     # Updated timestamp.  As the processing function performs work, this value changes
     updated: String!
+}
+
+input WMSLocationHistoryRecord {
+    Location: String!
+    LPN: String
 }
 
 type WarehouseRobotSystems {
