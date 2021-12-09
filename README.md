@@ -118,6 +118,7 @@ query GetZoneLocations($zoneId: String!, $limit: Int, $filter: LocationFilter, $
                     description
                 }
                 userStatus
+               sharedLocationViewUrl
             }
         }
         pageInfo {
@@ -155,7 +156,8 @@ resemble the following:
               }
             ],
             "exceptions": [],
-            "userStatus": null
+            "userStatus": null, 
+            "sharedLocationViewUrl": ""
           }
         },
         ...
