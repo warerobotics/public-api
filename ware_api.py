@@ -65,7 +65,7 @@ class WareAPI:
         raw_response = self.query(query=query)
         return self._extract_json_response(raw_response, "myInfo")
 
-    def zone_locations_page(self, zone_id: str, page: int = 0, cursor: Optional[Any] = None) -> Dict:
+    def zone_locations_page(self, zone_id: str, page: int = 0, cursor: Optional[Any] = None, record_filter: Optional[Any] = None) -> Dict:
         query = """
     query GetZoneLocations($zoneId: String!, $limit: Int, $filter: LocationFilter, $cursor: String, $page: Pagination) {
         zoneLocationsPage(zoneId: $zoneId, limit: $limit, filter: $filter, cursor: $cursor, paginate: $page) {
@@ -85,6 +85,7 @@ class WareAPI:
                         description
                     }
                     userStatus
+                    sharedLocationViewUrl
                 }
             }
             pageInfo {
@@ -105,6 +106,9 @@ class WareAPI:
             "filter": {"aisleStart": None, "aisleEnd": None, "statusFilter": []},
             "cursor": cursor,
         }
+        if record_filter:
+            variables["filter"] = record_filter
+
         raw_response = self.query(query=query, variables=variables)
         return self._extract_json_response(raw_response, "zoneLocationsPage")
 

@@ -151,6 +151,8 @@ type LocationRecord {
     exceptions: [RecordException]!
     # user applied status, null if no user status applied to this record
     userStatus: RecordUserStatus
+    # URL that allows public access to the captured data for this location.  Remains valid for 72 hours
+    sharedLocationViewUrl: String
 }
 
 type LocationPageItem {
