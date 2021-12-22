@@ -56,6 +56,14 @@ type Query {
     wmsLocationHistoryUploadRecord(
         # id that was originally returned when the upload job was created
         id: String!): WMSLocationHistoryUpload
+    getLocationScanOrder(
+      id: String!
+    ): LocationScanOrder
+    getLocationScanOrders(
+      zoneId: String!
+      userTrackingToken: String
+      status: LocationScanOrderStatus
+    ): LocationScanOrders
 }
 
 type Mutation {
@@ -74,10 +82,16 @@ type Mutation {
       # Required action identifier
       requiredActionId: String!
     ): WarehouseRobotSystems
+    createLocationScanOrder(
+      zoneId: String!
+      bins: [String!]!
+      userTrackingToken: String
+    ): LocationScanOrderCreationResponse
 }
 
 type Subscription {
     subscribeWMSLocationHistoryUploadStatusChange(id: String!): WMSLocationHistoryUpload
+    subscribeLocationScanOrders(zoneId: String!): LocationScanOrders
 }
 
 # User accessible zone lists
