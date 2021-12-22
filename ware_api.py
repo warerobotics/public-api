@@ -1,7 +1,7 @@
 import requests
 import os
 import json
-from typing import Any, Dict, Optional, Callable
+from typing import Any, Dict, Optional, Callable, List
 
 import websocket
 from requests_aws4auth import AWS4Auth
@@ -204,6 +204,65 @@ class WareAPI:
             data_handler=data_handler,
         )
 
+    def subscribe_location_scan_orders(self, zone_id: str, data_handler: Callable):
+        query = """
+            subscription SubscribeLocationScanOrders($zoneId: String!) {
+              subscribeLocationScanOrders(zoneId: $zoneId) {
+                zoneId
+                userTrackingToken
+                status
+                orders {
+                  bins {
+                    error {
+                      id
+                      message
+                      timestamp
+                      type
+                    }
+                    id
+                    record {
+                      aisle
+                      binName
+                      exceptions {
+                        description
+                        type
+                      }
+                      inventory {
+                        lpn
+                        recordId
+                      }
+                      recordId
+                      sharedLocationViewUrl
+                      timestamp
+                      userStatus
+                    }
+                    status
+                  }
+                  endTime
+                  createdAt
+                  id
+                  startTime
+                  status
+                  userTrackingToken
+                  zoneId
+                }
+              }
+            }
+        """
+
+        variables = {
+            "zoneId": zone_id,
+        }
+
+        subscribe(
+            aws_access_key=self.access_key,
+            aws_secret_key=self.secret_key,
+            api_url=self.ware_api_url,
+            subscription=query,
+            subscription_variables=variables,
+            data_handler=data_handler,
+        )
+
     def reset_required_action(self, required_action_id: str) -> Dict:
         mutation = """
           mutation ResetDroneRequiredAction($requiredActionId: String!) {
@@ -229,3 +288,127 @@ class WareAPI:
     @staticmethod
     def unsubscribe(subscription_id: str, web_socket: websocket.WebSocket) -> None:
         unsubscribe(subscription_id, web_socket)
+
+    def create_location_scan_order(self, zone_id: str, bins: List[str], user_tracking_token: Optional[str] = None) -> Dict:
+        mutation = """
+            mutation CreateLocationScanOrder($zoneId: String!, $bins: [String!]!, $userTrackingToken: String) {
+              createLocationScanOrder(zoneId: $zoneId, bins: $bins, userTrackingToken: $userTrackingToken) {
+                id
+                createdAt
+                userTrackingToken
+              }
+            }
+        """
+
+        variables = {
+            "zoneId": zone_id,
+            "bins": bins,
+            "userTrackingToken": user_tracking_token,
+        }
+
+        return self._extract_json_response(
+            self.query(query=mutation, variables=variables), "createLocationScanOrder"
+        )
+
+    def get_location_scan_order(self, location_scan_order_id: str) -> Dict:
+        query = """
+            query GetLocationScanOrder($id: String!) {
+              getLocationScanOrder(id: $id) {
+                bins {
+                  error {
+                    id
+                    message
+                    timestamp
+                    type
+                  }
+                  id
+                  record {
+                    aisle
+                    binName
+                    exceptions {
+                      description
+                      type
+                    }
+                    inventory {
+                      lpn
+                      recordId
+                    }
+                    recordId
+                    sharedLocationViewUrl
+                    timestamp
+                    userStatus
+                  }
+                  status
+                }
+                endTime
+                createdAt
+                id
+                startTime
+                status
+                userTrackingToken
+                zoneId
+              }
+            }
+        """
+
+        variables = { "id": location_scan_order_id }
+
+        return self._extract_json_response(
+            self.query(query=query, variables=variables), "getLocationScanOrder"
+        )
+
+    def get_location_scan_orders(self, zone_id: str, user_tracking_token: Optional[str] = None, status: Optional[str] = None) -> Dict:
+        query = """
+            query GetLocationScanOrders($zoneId: String!, $userTrackingToken: String, $status: String) {
+              getLocationScanOrders(id: $id, userTrackingToken: $userTrackingToken, status: $status) {
+                zoneId
+                userTrackingToken
+                status
+                orders {
+                  bins {
+                    error {
+                      id
+                      message
+                      timestamp
+                      type
+                    }
+                    id
+                    record {
+                      aisle
+                      binName
+                      exceptions {
+                        description
+                        type
+                      }
+                      inventory {
+                        lpn
+                        recordId
+                      }
+                      recordId
+                      sharedLocationViewUrl
+                      timestamp
+                      userStatus
+                    }
+                    status
+                  }
+                  endTime
+                  createdAt
+                  id
+                  startTime
+                  status
+                  userTrackingToken
+                  zoneId
+                }
+              }
+            }
+        """
+
+        variables = {
+            "zoneId": zone_id,
+            "status": status,
+            "userTrackingToken": user_tracking_token,
+        }
+
+        return self._extract_json_response(
+            self.query(query=query, variables=variables), "getLocationScanOrders"
+        )

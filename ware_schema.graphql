@@ -252,3 +252,63 @@ type DroneRequiredAction {
   # If action is non-null, user must call a mutation to clear this required action
   action: String
 }
+
+enum LocationScanOrderStatus {
+  ERROR
+  QUEUED
+  SUCCEEDED
+  IN_PROGRESS
+}
+
+enum BinLocationFulfillmentStatus {
+  ERROR
+  QUEUED
+  SUCCEEDED
+  IN_PROGRESS
+}
+
+enum BinLocationFulfillmentErrorType {
+  NO_VALID_PATH
+}
+
+type LocationScanOrderCreationResponse {
+  id: String!
+  # UTC ISO timestamp
+  createdAt: String!
+}
+
+type BinLocationFulfillmentError {
+  id: String!
+  type: BinLocationFulfillmentErrorType!
+  # UTC ISO timestamp
+  timestamp: String!
+  message: String
+}
+
+type BinLocationScan {
+  # identifier for the bin location for a scan order
+  id: String!
+  record: LocationRecord!
+  error: BinLocationFulfillmentError
+  status: BinLocationFulfillmentStatus!
+}
+
+type LocationScanOrder {
+  id: String!
+  zoneId: String!
+  # arbitrary user-supplied string
+  userTrackingToken: String
+  status: LocationScanOrderStatus!
+  # UTC ISO timestamps
+  createdAt: String!
+  startTime: String
+  endTime: String
+  bins: [BinLocationScan]
+}
+
+type LocationScanOrders {
+  zoneId: String!
+  userTrackingToken: String
+  status: LocationScanOrderStatus
+  orders: [LocationScanOrder]
+}
