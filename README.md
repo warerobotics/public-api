@@ -27,23 +27,23 @@ Please refer to the `ware_schema.graphql` file for a complete schema definition 
 
 ## Api List
 
-- [myInfo](###myinfo)
-- [zoneLocationsPageV2](###zoneLocationsPageV2)
+- [myInfo](#myinfo)
+- [zoneLocationsPageV2](#zoneLocationsPageV2)
 - [
 createWMSLocationHistoryUpload\
 CreateWMSLocationHistoryRecords\
 WmsLocationHistoryUploadRecord\
-SubscribeWMSLocationHistoryUploadStatusChange](##WMSDataUpload)
-- [ResetDroneRequiredAction](###Clear/reset\ a\ required\ action)
-- [CreateLocationScanOrder](###createLocationScanOrder)
-- [GetLocationScanOrder](###getLocationScanOrder)
-- [GetLocationScanOrders](###getLocationScanOrders)
+SubscribeWMSLocationHistoryUploadStatusChange](#wms-data-upload)
+- [ResetDroneRequiredAction](#clearreset-a-required-action)
+- [CreateLocationScanOrder](#createLocationScanOrder)
+- [GetLocationScanOrder](#getlocationscanorder)
+- [GetLocationScanOrders](#getLocationScanOrders)
 
 ## Techniques
-- [Result Paging](##ResultPaging)
+- [Result Paging](#ResultPaging)
 
 ## Deprecated
-- [zoneLocationsPage](###zoneLocationsPage)
+- [zoneLocationsPage](#zoneLocationsPage)
 
 ---
 
