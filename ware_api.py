@@ -1,7 +1,9 @@
+from typing_extensions import NotRequired
 import requests
 import os
 import json
-from typing import Any, Dict, Optional, Callable, List
+from enum import Enum
+from typing import Dict, Optional, Callable, List, TypedDict
 
 import websocket
 from requests_aws4auth import AWS4Auth
@@ -14,6 +16,31 @@ AWS_SERVICE = "appsync"
 DEFAULT_HOST = "iqiurguobbaotjtnrffqnx7zmu.appsync-api.us-east-1.amazonaws.com"
 DEFAULT_REGION = "us-east-1"
 
+class Pagination(str, Enum):  # same as graphql enum
+    NEXT = "NEXT"
+    PREV = "PREV"
+
+class StatusFilter(str, Enum):
+    EXCEPTION = "EXCEPTION"
+    AUDIT = "AUDIT"
+    RESOLVED = "RESOLVED"
+
+class RecordSearchType(str, Enum):
+    LPN = "LPN"
+    LOCATION = "LOCATION"
+
+class RecordSort(str, Enum):
+    AISLE = "AISLE"
+    LATEST = "LATEST"
+
+class LocationFilterV2(TypedDict):
+    searchString: NotRequired[str]
+    searchType: NotRequired[RecordSearchType]
+    aisleStart: NotRequired[int]
+    aisleEnd: NotRequired[int]
+    occupancy: NotRequired[bool]
+    locationScanOrderId: NotRequired[str]
+    statusFilter: List[StatusFilter]
 
 class WareAPI:
     def __init__(self, host: str = DEFAULT_HOST, region: str = DEFAULT_REGION):
@@ -65,27 +92,65 @@ class WareAPI:
         raw_response = self.query(query=query)
         return self._extract_json_response(raw_response, "myInfo")
 
-    def zone_locations_page(self, zone_id: str, page: int = 0, cursor: Optional[Any] = None, record_filter: Optional[Any] = None) -> Dict:
+    def zone_locations_page(
+            self,
+            zone_id: str,
+            cursor: Optional[str] = None,
+            paginate: Pagination = Pagination.NEXT,
+            sort: RecordSort = RecordSort.LATEST,
+            record_filter: Optional[LocationFilterV2] = None
+    ) -> Dict:
         query = """
-    query GetZoneLocations($zoneId: String!, $limit: Int, $filter: LocationFilter, $cursor: String, $page: Pagination) {
-        zoneLocationsPage(zoneId: $zoneId, limit: $limit, filter: $filter, cursor: $cursor, paginate: $page) {
+    query getZoneLocations(
+        $zoneId: String!,
+        $limit: Int,
+        $cursor: String,
+        $paginate: Pagination,
+        $sort: RecordSort,
+        $filter: LocationFilterV2
+    ) {
+        zoneLocationsPageV2 (
+            zoneId: $zoneId,
+            limit: $limit,
+            cursor: $cursor,
+            paginate: $paginate,
+            sort: $sort,
+            filter: $filter
+        ) {
             zoneId
             timezone
             records {
+                cursor
                 record {
-                    recordId
+                    id
                     aisle
                     binName
-                    timestamp
+                    sharedLocationViewUrl
                     inventory {
                         lpn
+                        exceptions {
+                            type
+                            parameters {
+                                lpn
+                                wmsReportedLpns	
+                            }
+                            exceptionHistory {
+                                userStatus
+                                timestamp
+                            }
+                        }
                     }
                     exceptions {
                         type
-                        description
+                        parameters {
+                            lpn
+                            wmsReportedLpns	
+                        }
+                        exceptionHistory {
+                            userStatus
+                            timestamp
+                        }
                     }
-                    userStatus
-                    sharedLocationViewUrl
                 }
             }
             pageInfo {
@@ -101,16 +166,16 @@ class WareAPI:
         """
         variables = {
             "zoneId": zone_id,
+            "sort": sort,
+            "paginate": paginate,
             "limit": 10,
-            "pageIndex": page,
-            "filter": {"aisleStart": None, "aisleEnd": None, "statusFilter": []},
             "cursor": cursor,
         }
         if record_filter:
             variables["filter"] = record_filter
 
         raw_response = self.query(query=query, variables=variables)
-        return self._extract_json_response(raw_response, "zoneLocationsPage")
+        return self._extract_json_response(raw_response, "zoneLocationsPageV2")
 
     def create_wms_location_history_upload(self, zone_id: str, file_format: Optional[str]="csv") -> Dict:
         if file_format:
