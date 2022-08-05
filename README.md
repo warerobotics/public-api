@@ -29,6 +29,7 @@ Please refer to the `ware_schema.graphql` file for a complete schema definition 
 
 - [myInfo](#myinfo)
 - [zoneLocationsPageV2](#zoneLocationsPageV2)
+- [zoneLocationsReport](#zoneLocationsReport)
 - [
 createWMSLocationHistoryUpload\
 CreateWMSLocationHistoryRecords\
