@@ -30,10 +30,10 @@ def main() -> None:
         while more_data:
             zone_locations_result = api.zone_locations_page(
                 str(zone_uuid), 
-                cursor,
-                Pagination.NEXT,
-                RecordSort.LATEST,
-                {
+                cursor=cursor,
+                paginate=Pagination.NEXT,
+                sort=RecordSort.LATEST,
+                record_filter={
                     "statusFilter": []
                 }
             )

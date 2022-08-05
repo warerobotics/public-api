@@ -177,6 +177,33 @@ class WareAPI:
         raw_response = self.query(query=query, variables=variables)
         return self._extract_json_response(raw_response, "zoneLocationsPageV2")
 
+    def zone_locations_report(
+            self,
+            zone_id: str,
+            sort: RecordSort = RecordSort.LATEST,
+            record_filter: Optional[LocationFilterV2] = None
+    ) -> Dict:
+        query = """
+    query getZoneLocationReport(
+        $zoneId: String!, 
+        $sort: RecordSort, 
+        $filter: LocationFilterV2
+    ) {
+        zoneLocationsReport(zoneId: $zoneId, sort: $sort, filter: $filter) {
+            zoneInventoryReportUrl
+        }
+    }
+        """
+        variables = {
+            "zoneId": zone_id,
+            "sort": sort,
+        }
+        if record_filter:
+            variables["filter"] = record_filter
+
+        raw_response = self.query(query=query, variables=variables)
+        return self._extract_json_response(raw_response, "zoneLocationsReport")
+
     def create_wms_location_history_upload(self, zone_id: str, file_format: Optional[str]="csv") -> Dict:
         if file_format:
             file_format = file_format.upper()
