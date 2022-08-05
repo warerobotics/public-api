@@ -166,8 +166,8 @@ class WareAPI:
         """
         variables = {
             "zoneId": zone_id,
-            "sort": sort,
-            "paginate": paginate,
+            "sort": sort.value,
+            "paginate": paginate.value,
             "limit": 10,
             "cursor": cursor,
         }
@@ -196,10 +196,11 @@ class WareAPI:
         """
         variables = {
             "zoneId": zone_id,
-            "sort": sort,
+            "sort": sort.value,
         }
         if record_filter:
             variables["filter"] = record_filter
+
 
         raw_response = self.query(query=query, variables=variables)
         return self._extract_json_response(raw_response, "zoneLocationsReport")
