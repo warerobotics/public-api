@@ -24,9 +24,9 @@ def main() -> None:
     parser.add_argument(
         "--endpoint", type=str, help="Optional endpoint value to override the default", default=DEFAULT_HOST
     )
-    parser.add_argument("--zone_id", type=str, help="Zone ID that the upload pertains to")
+    parser.add_argument("--zone-id", type=str, help="Zone ID that the upload pertains to")
     parser.add_argument("--file", type=str, help="Source file name")
-    parser.add_argument("--status_check", type=str, default="subscribe")
+    parser.add_argument("--status-check", type=str, default="subscribe")
     args = parser.parse_args()
     try:
         # zone_id should be a valid UUID4
@@ -51,6 +51,7 @@ def main() -> None:
         files = {"file": (args.file, f)}
         fields_dict = json.loads(create_wms_upload_result["data"]["uploadFields"])
         http_response = requests.post(create_wms_upload_result["data"]["uploadUrl"], data=fields_dict, files=files)
+
     # If successful, returns HTTP status code 204
     print(f"File upload HTTP status code: {http_response.status_code}")
 

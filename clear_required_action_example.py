@@ -23,7 +23,7 @@ def main() -> None:
 
     api = WareAPI(host=args.endpoint)
 
-    result = api.reset_required_action(args.required_action_id)
+    result = api.reset_drone_required_action(args.required_action_id)
 
     if result['status'] != SUCCESS_STATUS:
         return result

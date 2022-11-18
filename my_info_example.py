@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import argparse
 import json
 from ware_api import WareAPI, DEFAULT_HOST
@@ -21,6 +22,7 @@ def main() -> None:
     # Use JSON format string for the query. It does not need reformatting.
 
     my_info_result = api.my_info()
+
     if my_info_result["status"] != "success":
         print(f"Error calling myInfo: {my_info_result['message']}.\n"
               "Ensure proper AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set and "
@@ -28,7 +30,7 @@ def main() -> None:
         return
 
     # Print the output to the console.
-    print(json.dumps(my_info_result["data"], indent=3))
+    print(json.dumps(my_info_result["data"], indent=2))
 
 
 if __name__ == "__main__":

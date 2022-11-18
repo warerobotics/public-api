@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import argparse
 import uuid
 import requests
@@ -27,6 +28,7 @@ def main() -> None:
     parser.add_argument("--zone_id", type=str, help="Zone ID that the upload pertains to")
     parser.add_argument("--file", type=str, help="Source file name with JSON payload")
     args = parser.parse_args()
+
     try:
         # zone_id should be a valid UUID4
         zone_uuid = uuid.UUID(f"urn:uuid:{args.zone_id}")
@@ -40,7 +42,7 @@ def main() -> None:
         json_from_file = json.load(f)
 
     create_wms_upload_result = api.create_wms_location_history_records(zone_id=args.zone_id, data=json_from_file)
-    print(create_wms_upload_result)
+    print(json.dumps(create_wms_upload_result, indent=2))
 
     if create_wms_upload_result["status"] != "success":
         print(f"Error calling createWMSLocationHistoryRecords: {create_wms_upload_result['message']}.")
@@ -48,7 +50,7 @@ def main() -> None:
 
     # Now we can poll for status using the wmsLocationHistoryUploadRecord endpoint
     result = api.wms_location_history_upload_record(create_wms_upload_result["data"]["id"])
-    print(result)
+    print(json.dumps(result, indent=2))
     while result["status"] == "success" and result["data"]["status"] not in ["SUCCESS", "FAILURE"]:
         sleep(1)
         result = api.wms_location_history_upload_record(create_wms_upload_result["data"]["id"])

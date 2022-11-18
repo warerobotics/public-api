@@ -23,7 +23,32 @@ the `requests` and `AWS4Auth` libraries. A sample `requirements.txt` file is inc
 
 Please refer to the `ware_schema.graphql` file for a complete schema definition of available endpoints in the Ware API.
 
-## Queries
+# Queries
+
+## Api List
+
+- [myInfo](#myinfo)
+- [zoneLocationsPageV2](#zoneLocationsPageV2)
+- [zoneLocationsReport](#zoneLocationsReport)
+- [
+createWMSLocationHistoryUpload\
+CreateWMSLocationHistoryRecords\
+WmsLocationHistoryUploadRecord\
+SubscribeWMSLocationHistoryUploadStatusChange](#wms-data-upload)
+- [ResetDroneRequiredAction](#clearreset-a-required-action)
+- [CreateLocationScanOrder](#createLocationScanOrder)
+- [GetLocationScanOrder](#getlocationscanorder)
+- [GetLocationScanOrders](#getLocationScanOrders)
+
+## Techniques
+- [Result Paging](#ResultPaging)
+
+## Deprecated
+- [zoneLocationsPage](#zoneLocationsPage)
+
+---
+
+## Self
 
 ### myInfo
 
@@ -90,7 +115,165 @@ following:
 }
 ```
 
+## Inventory and Location Information
+
+### zoneLocationsPageV2
+**Description:**
+The zoneLocationsPageV2 query expects a required parameter for `zone_id` and several optional parameters that control 
+data page size, paging options, sorting direction and filter parameters. This query can be used to determine what LPNs 
+have last been detected in the specified zone by the Ware system.
+
+**Request**
+```graphql
+query GetInventoryPage(
+  $zoneId: String!
+  $limit: Int
+  $filter: LocationFilterV2
+  $cursor: String
+  $page: Pagination
+  $sort: RecordSort
+) {
+  zoneLocationsPageV2(
+    zoneId: $zoneId
+    limit: $limit
+    cursor: $cursor
+    paginate: $page
+    filter: $filter
+    sort: $sort
+  ) {
+    zoneId
+    records {
+      cursor
+      record {
+        id
+        aisle
+        binName
+        timestamp
+        inventory {
+          id
+          lpn
+          exceptions {
+            id
+            type
+            exceptionHistory {
+              userStatus
+            }
+            parameters {
+              lpn
+            }
+          }
+        }
+        exceptions {
+          id
+          type
+          exceptionHistory {
+            userStatus
+          }
+          parameters {
+            lpn
+          }
+        }
+      }
+    }
+    pageInfo {
+      totalRecords
+      startIndex
+      startCursor
+      endCursor
+      hasNextPage
+      hasPrevPage
+    }
+  }
+}
+```
+
+**Response**
+```json
+{
+  "data": {
+    "zoneLocationsPageV2": {
+      "zoneId": "bff4611f-a9f2-4b8b-abeb-99ea6b6a55f0",
+      "timezone": "UTC",
+      "records": [
+        {
+          "cursor": "{\"iso_time\": \"2022-06-08T23:31:54.326421\", \"aisle_index\": 1, \"bin_index\": 30000, \"bh_id\": \"a6cf6caa-b56f-406f-9108-c0691abfb4dc\", \"filter\": {\"search_string\": null, \"search_type\": null, \"aisle_start\": null, \"aisle_end\": null, \"occupancy\": null, \"location_scan_order_id\": null, \"status_filter\": [\"EXCEPTION\"]}}",
+          "record": {
+            "id": "a6cf6caa-b56f-406f-9108-c0691abfb4dc",
+            "aisle": "A",
+            "binName": "A-03-W-1",
+            "timestamp": "2022-06-08T23:36:31+00:00",
+            "inventory": [
+              {
+                "id": "a3af04e2-4ce4-49c8-a6b8-d5fda92d5afd",
+                "lpn": "W-10001268",
+                "exceptions": []
+              }
+            ],
+            "exceptions": [
+              {
+                "id": "a77af534-928c-4f01-be92-784ce61172b6",
+                "exceptionHistory": [
+                  {
+                    "userStatus": null
+                  }
+                ],
+                "parameters": {
+                  "lpn": [
+                    "W-10001268"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "pageInfo": {
+        "totalRecords": 4,
+        "startIndex": 0,
+        "startCursor": "{\"iso_time\": \"2022-06-08T23:31:54.326421\", \"aisle_index\": 1, \"bin_index\": 30000, \"bh_id\": \"a6cf6caa-b56f-406f-9108-c0691abfb4dc\", \"filter\": {\"search_string\": null, \"search_type\": null, \"aisle_start\": null, \"aisle_end\": null, \"occupancy\": null, \"location_scan_order_id\": null, \"status_filter\": [\"EXCEPTION\"]}}",
+        "endCursor": "{\"iso_time\": \"2022-06-08T23:31:54.326421\", \"aisle_index\": 1, \"bin_index\": 30000, \"bh_id\": \"a6cf6caa-b56f-406f-9108-c0691abfb4dc\", \"filter\": {\"search_string\": null, \"search_type\": null, \"aisle_start\": null, \"aisle_end\": null, \"occupancy\": null, \"location_scan_order_id\": null, \"status_filter\": [\"EXCEPTION\"]}}",
+        "hasNextPage": true,
+        "hasPrevPage": false
+      }
+    }
+  }
+}
+```
+
+### zoneLocationsReport
+**Description:**
+The zoneLocationsReport query expects a required parameter for `zone_id` and several optional parameters that control 
+data sorting direction and filter parameters. The report in this query can be used to determine what LPNs have last 
+been detected in the specified zone by the Ware system.
+
+**Request**
+```gql
+query GetInventoryPage(
+    $zoneId: String!,$filter:LocationFilterV2,  $sort: RecordSort, $format: SpreadsheetFormat,
+) {
+  zoneLocationsReport(zoneId: $zoneId, filter: $filter, sort: $sort, reportFormat: $format) {
+    zoneInventoryReportUrl
+  }
+}
+```
+
+**Response**
+```json
+{
+  "data": {
+    "zoneLocationsReport": {
+      "zoneInventoryReportUrl": "https://foobar.com/foo.xlsx"
+    }
+  }
+}
+```
+
+
+
 ### zoneLocationsPage
+**Deprication**
+This API is being deprecated in favor of the new
+[unified location and inventory query](###zoneLocationsPageV2)
 
 **Description:**
 The zoneLocationsPage query expects a required parameter for `zone_id` and several optional parameters that control data
