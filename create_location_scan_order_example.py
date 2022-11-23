@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import json
 import argparse
 from ware_api import WareAPI, DEFAULT_HOST

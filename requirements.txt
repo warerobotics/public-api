@@ -2,3 +2,4 @@ boto3
 requests-aws4auth
 websockets
 websocket-client
+typing-extensions

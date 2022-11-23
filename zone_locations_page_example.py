@@ -1,6 +1,8 @@
-import argparse
+#!/usr/bin/env python
 import uuid
-from ware_api import WareAPI, DEFAULT_HOST
+import json
+import argparse
+from ware_api import Pagination, RecordSort, WareAPI, DEFAULT_HOST
 
 
 def main() -> None:
@@ -24,26 +26,29 @@ def main() -> None:
     try:
         # zone_id should be a valid UUID4
         zone_uuid = uuid.UUID(f"urn:uuid:{args.zone_id}")
-        page = 0
         more_data = True
         cursor = None
 
         while more_data:
-            zone_locations_result = api.zone_locations_page(zone_id=str(zone_uuid), page=page, cursor=cursor)
+            zone_locations_result = api.zone_locations_page(
+                str(zone_uuid),
+                cursor=cursor,
+                paginate=Pagination.NEXT,
+                sort=RecordSort.LATEST,
+                record_filter={
+                    "statusFilter": []
+                }
+            )
             if zone_locations_result["status"] != "success":
                 print(f"Error calling zoneLocationsPage: {zone_locations_result['message']}.")
                 break
-            zone_locations_data = zone_locations_result["data"]
-            for record in zone_locations_data["records"]:
-                bin_lpns = []
-                for lpn in record["record"]["inventory"]:
-                    bin_lpns.append(lpn["lpn"])
-                print(f"Bin: {record['record']['binName']} - LPNs: {bin_lpns}")
-            if zone_locations_data["pageInfo"]["hasNextPage"]:
+
+            print(json.dumps(zone_locations_result, indent=2))
+
+            if zone_locations_result["data"]["pageInfo"]["hasNextPage"]:
                 # Ware API uses cursors for paging.  To advance the page, pass the "endCursor" to subsequent calls
                 # as the starting cursor.
-                cursor = zone_locations_data["pageInfo"]["endCursor"]
-                page += 1
+                cursor = zone_locations_result["data"]["pageInfo"]["endCursor"]
             else:
                 more_data = False
 

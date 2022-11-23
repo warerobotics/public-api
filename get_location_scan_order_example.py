@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import uuid
 import json
 import argparse
