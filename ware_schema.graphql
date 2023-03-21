@@ -4,39 +4,6 @@ schema {
     subscription: Subscription
 }
 
-# Pagination direction
-enum Pagination {
-    NEXT
-    PREV
-}
-
-# Inventory or location record's status filter
-enum RecordStatusFilter {
-    EXCEPTION
-    AUDIT
-    RESOLVED
-}
-
-# Inventory or location record's user applied status
-enum RecordUserStatus {
-    AUDIT
-    RESOLVED
-}
-
-# Location filter
-input LocationFilter {
-    # full or partial location name string to match on, null to not apply
-    locationName: String
-    # starting aisle in aisle range inclusive filter, null to not apply
-    aisleStart: String
-    # ending aisle in the aisle range inclusive filter, null to not apply
-    aisleEnd: String
-    # occupancy flag, set to true to filter on occupied bin location, false to filter on empty, null to not apply
-    occupancy: Boolean
-    # list of enum values to inclusive filter on bin record status, null to not apply
-    statusFilter: [RecordStatusFilter]
-}
-
 type Query {
     # Get information about the warehouse zones accessible by the currently logged in user
     myInfo: User!
@@ -52,6 +19,20 @@ type Query {
         paginate: Pagination,
         # filter, if null, no filter is applied
         filter: LocationFilter): ZoneLocationsPage
+    zoneLocationsPageV2(
+        # zone identifier
+        zoneId: String!,
+        # number of rows per page, if null, defaults to 10
+        limit: Int,
+        # cursor from PageInfo to paginate, if null, set to the first of the total records
+        cursor: String,
+        # pagination direction, if null, defaults to NEXT
+        paginate: Pagination,
+        # filter, if null, no filter is applied
+        filter: LocationFilterV2
+        # sort option, if null, defaults to sorting by aisle
+        sort: RecordSort
+    ): ZoneLocationsPageV2
     # Get a single record for a WMS Location History Upload
     wmsLocationHistoryUploadRecord(
         # id that was originally returned when the upload job was created
@@ -121,6 +102,41 @@ type Zone {
     aisles: [String]!
 }
 
+#### Zone Locations Page V1 ####
+# Pagination direction
+enum Pagination {
+    NEXT
+    PREV
+}
+
+# Inventory or location record's status filter
+enum RecordStatusFilter {
+    EXCEPTION
+    AUDIT
+    RESOLVED
+}
+
+# Inventory or location record's user applied status
+enum RecordUserStatus {
+    AUDIT
+    RESOLVED
+}
+
+# Location filter
+input LocationFilter {
+    # full or partial location name string to match on, null to not apply
+    locationName: String
+    # starting aisle in aisle range inclusive filter, null to not apply
+    aisleStart: String
+    # ending aisle in the aisle range inclusive filter, null to not apply
+    aisleEnd: String
+    # occupancy flag, set to true to filter on occupied bin location, false to filter on empty, null to not apply
+    occupancy: Boolean
+    # list of enum values to inclusive filter on bin record status, null to not apply
+    statusFilter: [RecordStatusFilter]
+}
+
+
 # Meta-data about a page of records
 type PageInfo {
     # total number of records to page through
@@ -187,6 +203,9 @@ type ZoneLocationsPage {
     # meta-data about the page list
     pageInfo: PageInfo
 }
+
+
+#### WMS Uploads ####
 
 # Return result from createWMSLocationHistoryUpload
 type CreateWMSLocationHistoryUploadResult {
@@ -267,6 +286,7 @@ type DroneRequiredAction {
   action: String
 }
 
+#### Location Scan Orders ####
 enum LocationScanOrderStatus {
   ERROR
   QUEUED
@@ -325,4 +345,123 @@ type LocationScanOrders {
   userTrackingToken: String
   status: LocationScanOrderStatus
   orders: [LocationScanOrder]
+}
+
+#### zoneLocationsPageV2 ####
+enum RecordExceptionType {
+  MISSING_LPN
+  UNREADABLE_LPN
+  DETECTED_UNEXPECTED_PALLET_LPN
+  LPN_MULTI_ASSIGNMENT
+  DID_NOT_DETECT_PALLET_LPN
+  SKU_UNEXPECTED
+  SKU_NOT_DETECTED
+}
+
+enum RecordSearchType {
+  LPN
+  SKU
+  LOCATION
+}
+
+enum InventoryType {
+  LPN
+  SKU
+}
+
+type RecordExceptionHistory {
+  userId: String!
+  # ISO formatted UTC timestamp
+  timestamp: String!
+  userStatus: RecordUserStatus
+  comments: String
+}
+
+# One inventory or location exception/issue
+type RecordExceptionV2 {
+  # type of issue detected
+  id: String!
+  type: RecordExceptionType!
+  parameters: RecordExceptionParameters
+  exceptionHistory: [RecordExceptionHistory]
+}
+
+type RecordExceptionParameters {
+  lpn: [String]
+  sku: String
+  binLocation: String
+  binLocations: [String]
+  wmsReportedLpns: [String]
+  wmsReportedBinLocation: [String]
+  lpnPresentInWms: Boolean
+  skuPresentInWms: Boolean
+  locationPresentInWms: Boolean
+}
+
+input LocationFilterV2 {
+  # text for search
+  searchString: String
+  # type of search
+  searchType: RecordSearchType
+  # starting aisle in aisle range inclusive filter, null to not apply
+  aisleStart: String
+  # ending aisle in the aisle range inclusive filter, null to not apply
+  aisleEnd: String
+  # occupancy flag, set to true to filter on occupied bin location, false to filter on empty, null to not apply
+  occupancy: Boolean
+  # list of enum values to inclusive filter on record status, null to not apply
+  statusFilter: [RecordStatusFilter]
+  # id of location scan order to get locations for
+  locationScanOrderId: String
+}
+
+type InventoryRecordV2 {
+  id: String!
+  type: InventoryType!
+  text: String!
+  exceptions: [RecordExceptionV2]!
+  images: [RecordImage]!
+}
+
+type LocationRecordV2 {
+    # record identifier
+    id: String!
+    # warehouse aisle
+    aisle: String!
+    # bin location name, unique within a warehouse zone
+    binName: String!
+    # location record timestamp
+    timestamp: String!
+    # list of location exceptions, empty list if no exceptions
+    exceptions: [RecordExceptionV2]!
+    # location record images, empty list if no images
+    images: [RecordImage]!
+    # URL that can be given to unauthenticated users (e.g. 3rd party systems) that will show a read-only view
+    # that corresponds to this LocationRecord
+    sharedLocationViewUrl: String
+    # List of WMS records associated with the bin location
+    wmsRecords: [WMSRecord]
+    # Last known wms upload used for this bin history
+    wmsUploadedAt: String
+    # List of associated inventory
+    inventory: [InventoryRecordV2]
+}
+
+type LocationPageItemV2 {
+    # cursor token for this record
+    cursor: String
+    # inventory record
+    record: LocationRecordV2
+}
+
+# A page from the latest scanned location records for a zone
+type ZoneLocationsPageV2 {
+    # zone identifier
+    zoneId: String!
+    # IANA/Olson timezone string for the record timestamps
+    timezone: String!
+    # page list of inventory page items
+    records: [LocationPageItemV2]
+    # meta-data about the page list
+    pageInfo: PageInfo
 }
